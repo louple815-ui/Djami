@@ -7,8 +7,9 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -19,86 +20,73 @@ import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var statusText: TextView
-    private lateinit var resultText: TextView
-    private lateinit var speechRecognizer: SpeechRecognizer
+    private lateinit var tvStatus: TextView
+    private lateinit var tvResult: TextView
+    private lateinit var btnSpeak: Button
+    
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var tts: TextToSpeech? = null
     private val REQUEST_MIC_CODE = 100
+    private val TAG = "DJAMI_AI"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 100, 50, 50)
-        }
+        tvStatus = findViewById(R.id.tvStatus)
+        tvResult = findViewById(R.id.tvResult)
+        btnSpeak = findViewById(R.id.btnSpeak)
 
-        val title = TextView(this).apply {
-            text = "Assistant DJAMI"
-            textSize = 28f
-            setPadding(0, 0, 0, 50)
-        }
-
-        statusText = TextView(this).apply {
-            text = "Prêt."
-            textSize = 18f
-            setPadding(0, 0, 0, 20)
-        }
-
-        resultText = TextView(this).apply {
-            text = "Ce que tu dis apparaîtra ici..."
-            textSize = 22f
-            setPadding(0, 0, 0, 50)
-        }
-
-        val micButton = Button(this).apply {
-            text = "🎤 Appuyer pour parler"
-            textSize = 20f
-            setOnClickListener {
-                checkPermissionAndListen()
+        // Initialisation de la Voix (TTS)
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = Locale.FRENCH
+                Log.d(TAG, "Moteur TTS initialisé.")
+            } else {
+                Log.e(TAG, "Erreur d'initialisation du TTS.")
             }
         }
 
-        layout.addView(title)
-        layout.addView(statusText)
-        layout.addView(resultText)
-        layout.addView(micButton)
-
-        setContentView(layout)
         setupSpeechRecognizer()
+        
+        btnSpeak.setOnClickListener {
+            checkPermissionAndListen()
+        }
     }
 
     private fun setupSpeechRecognizer() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            tvStatus.text = "Erreur : Reconnaissance vocale indisponible"
+            return
+        }
+
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
+        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
-                statusText.text = "🎙️ Écoute en cours..."
-                resultText.text = "..."
+                tvStatus.text = "🎙️ Écoute..."
+                tvResult.text = "..."
             }
-
             override fun onEndOfSpeech() {
-                statusText.text = "Traitement..."
+                tvStatus.text = "Traitement..."
             }
-
             override fun onError(error: Int) {
-                statusText.text = "Erreur d'écoute. Réessaie."
+                tvStatus.text = "Erreur d'écoute. Réessaie."
+                Log.e(TAG, "Erreur SpeechRecognizer: $error")
             }
-
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
                     val texteEntendu = matches[0]
-                    resultText.text = texteEntendu
-                    executerCommande(texteEntendu)
+                    tvResult.text = texteEntendu
+                    handleCommand(texteEntendu)
                 }
             }
-
             override fun onPartialResults(partialResults: Bundle?) {
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
-                    resultText.text = matches[0]
+                    tvResult.text = matches[0]
                 }
             }
-
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
@@ -106,30 +94,41 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    // --- LE CERVEAU DE DJAMI ---
-    private fun executerCommande(texte: String) {
+    private fun handleCommand(texte: String) {
         val t = texte.lowercase(Locale.getDefault())
+        var reponse = ""
 
         if (t.contains("heure")) {
             val heureActuelle = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            statusText.text = "Il est $heureActuelle."
+            reponse = "Il est $heureActuelle."
         } 
         else if (t.contains("whatsapp")) {
-            statusText.text = "Ouverture de WhatsApp..."
+            reponse = "Ouverture de WhatsApp."
+            speak(reponse)
             try {
                 val intent = packageManager.getLaunchIntentForPackage("com.whatsapp")
                 if (intent != null) {
                     startActivity(intent)
-                    statusText.text = "WhatsApp est ouvert !"
                 } else {
-                    statusText.text = "WhatsApp n'est pas installé sur ce téléphone."
+                    reponse = "WhatsApp n'est pas installé."
+                    tvStatus.text = reponse
                 }
             } catch (e: Exception) {
-                statusText.text = "Impossible d'ouvrir WhatsApp."
+                Log.e(TAG, "Erreur ouverture WhatsApp", e)
             }
+            return
         } 
         else {
-            statusText.text = "Je n'ai pas compris la commande. Réessaie !"
+            reponse = "Je n'ai pas encore l'IA locale, mais j'ai bien entendu : $texte"
+        }
+
+        tvStatus.text = reponse
+        speak(reponse)
+    }
+
+    private fun speak(texte: String) {
+        if (texte.isNotEmpty()) {
+            tts?.speak(texte, TextToSpeech.QUEUE_FLUSH, null, "DJAMI_TTS")
         }
     }
 
@@ -147,7 +146,7 @@ class MainActivity : AppCompatActivity() {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.FRENCH.toString())
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         }
-        speechRecognizer.startListening(intent)
+        speechRecognizer?.startListening(intent)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -155,12 +154,16 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == REQUEST_MIC_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             startListening()
         } else {
-            statusText.text = "Erreur : Permission micro refusée."
+            tvStatus.text = "Permission micro refusée."
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        speechRecognizer.destroy()
+        speechRecognizer?.destroy()
+        if (tts != null) {
+            tts?.stop()
+            tts?.shutdown()
+        }
     }
 }
