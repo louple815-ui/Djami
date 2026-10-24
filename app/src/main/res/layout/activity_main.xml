@@ -21,29 +21,30 @@
         android:id="@+id/tvStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Prêt"
+        android:text="Correcteur prêt"
         android:textColor="#FFD700"
         android:textSize="18sp"
         android:layout_marginBottom="20dp"/>
 
-    <!-- Le champ de texte pour écrire -->
+    <!-- On active la correction automatique ici (textAutoCorrect et textCapSentences) -->
     <EditText
         android:id="@+id/etInput"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Écris ton texte ici (FR, EN, DE)..."
+        android:layout_height="150dp"
+        android:hint="Écris ton texte ici, les fautes seront soulignées..."
         android:padding="16dp"
         android:background="#F0F0F0"
         android:textColor="#000000"
+        android:gravity="top|start"
+        android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
         android:layout_marginBottom="20dp"/>
 
-    <!-- Bouton pour lancer l'analyse -->
     <Button
         android:id="@+id/btnAnalyze"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:backgroundTint="#FFD700"
-        android:text="Analyser et Corriger"
+        android:text="Corriger le texte"
         android:textColor="#1B5E20"
         android:textStyle="bold"
         android:layout_marginBottom="20dp"/>

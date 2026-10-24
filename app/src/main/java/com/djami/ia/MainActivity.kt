@@ -50,76 +50,77 @@ class MainActivity : AppCompatActivity() {
 
         setupSpeechRecognizer()
         
-        // Action du bouton Parler
         btnSpeak.setOnClickListener { checkPermissionAndListen() }
         
         // Action du bouton Analyser
         btnAnalyze.setOnClickListener {
             val texteAEcrire = etInput.text.toString()
             if (texteAEcrire.isNotEmpty()) {
-                analyserTexteBasique(texteAEcrire)
+                analyserTexte(texteAEcrire)
             } else {
                 tvStatus.text = "Écris quelque chose d'abord !"
             }
         }
     }
 
-    // --- LE MOTEUR D'ANALYSE (En attendant l'IA) ---
-    private fun analyserTexteBasique(texte: String) {
+    // --- LE CERVEAU D'ANALYSE ---
+    private fun analyserTexte(texte: String) {
         tvStatus.text = "Analyse en cours..."
-        var correction = texte
-        var message = ""
+        
+        // On découpe le texte en mots
+        val mots = texte.split(" ", ",", ".", "!", "?")
+        var motsCorriges = 0
+        val motsSoulignes = StringBuilder()
 
-        // Détection de langue basique
-        val texteMinuscule = texte.lowercase(Locale.getDefault())
-        if (texteMinuscule.contains("the ") || texteMinuscule.contains("is ") || texteMinuscule.contains("hello")) {
-            message = "Langue détectée : Anglais.\n"
-        } else if (texteMinuscule.contains("der ") || texteMinuscule.contains("das ") || texteMinuscule.contains("hallo")) {
-            message = "Langue détectée : Allemand.\n"
-        } else {
-            message = "Langue détectée : Français.\n"
+        // On vérifie chaque mot (Simulation locale, le vrai dictionnaire viendra avec l'IA)
+        for (mot in mots) {
+            if (mot.isNotEmpty()) {
+                // Ici, on pourrait interroger le dictionnaire d'Android.
+                // Pour l'instant, on fait une correction basique.
+                if (mot.length < 2) {
+                    motsSoulignes.append("⚠️ Le mot '$mot' est trop court.\n")
+                    motsCorriges++
+                }
+            }
         }
 
-        // Règle simple : mettre une majuscule au début
-        if (correction.isNotEmpty() && correction[0].isLowerCase()) {
-            correction = correction.replaceFirstChar { it.uppercase() }
-            message += "Correction : Majuscule ajoutée au début.\n"
+        // Correction des majuscules et points
+        var texteFinal = texte.trim()
+        if (texteFinal.isNotEmpty() && texteFinal[0].isLowerCase()) {
+            texteFinal = texteFinal.replaceFirstChar { it.uppercase() }
+        }
+        if (texteFinal.isNotEmpty() && !texteFinal.endsWith(".") && !texteFinal.endsWith("!") && !texteFinal.endsWith("?")) {
+            texteFinal += "."
         }
 
-        // Règle simple : ajouter un point à la fin
-        if (correction.isNotEmpty() && !correction.endsWith(".") && !correction.endsWith("!") && !correction.endsWith("?")) {
-            correction += "."
-            message += "Correction : Point ajouté à la fin.\n"
-        }
+        val resultat = "Analyse terminée.\n" +
+                "Mots vérifiés : ${mots.size}\n" +
+                if (motsSoulignes.isNotEmpty()) "Problèmes :\n$motsSoulignes" else "Aucune faute grave détectée.\n" +
+                "\nTexte corrigé :\n$texteFinal"
 
-        val resultatFinal = "$message\nTexte corrigé : $correction"
-        tvResult.text = resultatFinal
-        tvStatus.text = "Analyse terminée."
-        speak(correction) // DJAMI lit la phrase corrigée
+        tvResult.text = resultat
+        tvStatus.text = "Prêt."
+        speak(texteFinal)
     }
 
     private fun setupSpeechRecognizer() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) return
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                tvStatus.text = "🎙️ Écoute..."
-            }
+            override fun onReadyForSpeech(params: Bundle?) { tvStatus.text = "🎙️ Écoute..." }
             override fun onEndOfSpeech() { tvStatus.text = "Traitement..." }
             override fun onError(error: Int) { tvStatus.text = "Erreur d'écoute." }
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
                     val texteEntendu = matches[0]
-                    etInput.setText(texteEntendu) // On remplit le champ de texte
+                    etInput.setText(texteEntendu)
                     handleCommand(texteEntendu)
                 }
             }
             override fun onPartialResults(partialResults: Bundle?) {
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!matches.isNullOrEmpty()) {
-                    tvResult.text = matches[0]
-                }
+                if (!matches.isNullOrEmpty()) { tvResult.text = matches[0] }
             }
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
@@ -145,11 +146,9 @@ class MainActivity : AppCompatActivity() {
             return
         } 
         else {
-            // Si ce n'est pas une commande, on l'analyse !
-            analyserTexteBasique(texte)
+            analyserTexte(texte)
             return
         }
-
         tvStatus.text = reponse
         speak(reponse)
     }
@@ -169,7 +168,7 @@ class MainActivity : AppCompatActivity() {
     private fun startListening() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.FRENCH.toString()) // À modifier plus tard pour le multilingue
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.FRENCH.toString())
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         }
         speechRecognizer?.startListening(intent)
