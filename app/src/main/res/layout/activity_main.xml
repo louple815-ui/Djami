@@ -12,9 +12,9 @@
         android:layout_height="wrap_content"
         android:text="DJAMI"
         android:textColor="#1B5E20"
-        android:textSize="40sp"
+        android:textSize="36sp"
         android:textStyle="bold"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:layout_marginBottom="10dp"/>
 
     <TextView
@@ -24,24 +24,46 @@
         android:text="Prêt"
         android:textColor="#FFD700"
         android:textSize="18sp"
-        android:layout_marginBottom="30dp"/>
+        android:layout_marginBottom="20dp"/>
+
+    <!-- Le champ de texte pour écrire -->
+    <EditText
+        android:id="@+id/etInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Écris ton texte ici (FR, EN, DE)..."
+        android:padding="16dp"
+        android:background="#F0F0F0"
+        android:textColor="#000000"
+        android:layout_marginBottom="20dp"/>
+
+    <!-- Bouton pour lancer l'analyse -->
+    <Button
+        android:id="@+id/btnAnalyze"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:backgroundTint="#FFD700"
+        android:text="Analyser et Corriger"
+        android:textColor="#1B5E20"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp"/>
 
     <TextView
         android:id="@+id/tvResult"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Ce que tu dis apparaîtra ici..."
+        android:text="Le résultat de l'analyse apparaîtra ici..."
         android:textColor="#333333"
-        android:textSize="20sp"
+        android:textSize="18sp"
         android:gravity="center"
-        android:layout_marginBottom="40dp"/>
+        android:layout_marginBottom="30dp"/>
 
     <Button
         android:id="@+id/btnSpeak"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:background="@drawable/btn_glass"
-        android:text="🎤 Appuyer pour parler"
+        android:text="🎤 Parler à DJAMI"
         android:textColor="#FFFFFF"
         android:textSize="20sp"
         android:textStyle="bold" />

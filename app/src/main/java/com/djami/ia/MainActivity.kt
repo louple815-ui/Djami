@@ -10,6 +10,7 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -23,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvStatus: TextView
     private lateinit var tvResult: TextView
     private lateinit var btnSpeak: Button
+    private lateinit var btnAnalyze: Button
+    private lateinit var etInput: EditText
     
     private var speechRecognizer: SpeechRecognizer? = null
     private var tts: TextToSpeech? = null
@@ -36,48 +39,79 @@ class MainActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
         tvResult = findViewById(R.id.tvResult)
         btnSpeak = findViewById(R.id.btnSpeak)
+        btnAnalyze = findViewById(R.id.btnAnalyze)
+        etInput = findViewById(R.id.etInput)
 
-        // Initialisation de la Voix (TTS)
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 tts?.language = Locale.FRENCH
-                Log.d(TAG, "Moteur TTS initialisé.")
-            } else {
-                Log.e(TAG, "Erreur d'initialisation du TTS.")
             }
         }
 
         setupSpeechRecognizer()
         
-        btnSpeak.setOnClickListener {
-            checkPermissionAndListen()
+        // Action du bouton Parler
+        btnSpeak.setOnClickListener { checkPermissionAndListen() }
+        
+        // Action du bouton Analyser
+        btnAnalyze.setOnClickListener {
+            val texteAEcrire = etInput.text.toString()
+            if (texteAEcrire.isNotEmpty()) {
+                analyserTexteBasique(texteAEcrire)
+            } else {
+                tvStatus.text = "Écris quelque chose d'abord !"
+            }
         }
     }
 
-    private fun setupSpeechRecognizer() {
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            tvStatus.text = "Erreur : Reconnaissance vocale indisponible"
-            return
+    // --- LE MOTEUR D'ANALYSE (En attendant l'IA) ---
+    private fun analyserTexteBasique(texte: String) {
+        tvStatus.text = "Analyse en cours..."
+        var correction = texte
+        var message = ""
+
+        // Détection de langue basique
+        val texteMinuscule = texte.lowercase(Locale.getDefault())
+        if (texteMinuscule.contains("the ") || texteMinuscule.contains("is ") || texteMinuscule.contains("hello")) {
+            message = "Langue détectée : Anglais.\n"
+        } else if (texteMinuscule.contains("der ") || texteMinuscule.contains("das ") || texteMinuscule.contains("hallo")) {
+            message = "Langue détectée : Allemand.\n"
+        } else {
+            message = "Langue détectée : Français.\n"
         }
 
+        // Règle simple : mettre une majuscule au début
+        if (correction.isNotEmpty() && correction[0].isLowerCase()) {
+            correction = correction.replaceFirstChar { it.uppercase() }
+            message += "Correction : Majuscule ajoutée au début.\n"
+        }
+
+        // Règle simple : ajouter un point à la fin
+        if (correction.isNotEmpty() && !correction.endsWith(".") && !correction.endsWith("!") && !correction.endsWith("?")) {
+            correction += "."
+            message += "Correction : Point ajouté à la fin.\n"
+        }
+
+        val resultatFinal = "$message\nTexte corrigé : $correction"
+        tvResult.text = resultatFinal
+        tvStatus.text = "Analyse terminée."
+        speak(correction) // DJAMI lit la phrase corrigée
+    }
+
+    private fun setupSpeechRecognizer() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) return
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
                 tvStatus.text = "🎙️ Écoute..."
-                tvResult.text = "..."
             }
-            override fun onEndOfSpeech() {
-                tvStatus.text = "Traitement..."
-            }
-            override fun onError(error: Int) {
-                tvStatus.text = "Erreur d'écoute. Réessaie."
-                Log.e(TAG, "Erreur SpeechRecognizer: $error")
-            }
+            override fun onEndOfSpeech() { tvStatus.text = "Traitement..." }
+            override fun onError(error: Int) { tvStatus.text = "Erreur d'écoute." }
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
                     val texteEntendu = matches[0]
-                    tvResult.text = texteEntendu
+                    etInput.setText(texteEntendu) // On remplit le champ de texte
                     handleCommand(texteEntendu)
                 }
             }
@@ -103,23 +137,17 @@ class MainActivity : AppCompatActivity() {
             reponse = "Il est $heureActuelle."
         } 
         else if (t.contains("whatsapp")) {
-            reponse = "Ouverture de WhatsApp."
-            speak(reponse)
+            speak("Ouverture de WhatsApp.")
             try {
                 val intent = packageManager.getLaunchIntentForPackage("com.whatsapp")
-                if (intent != null) {
-                    startActivity(intent)
-                } else {
-                    reponse = "WhatsApp n'est pas installé."
-                    tvStatus.text = reponse
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Erreur ouverture WhatsApp", e)
-            }
+                if (intent != null) startActivity(intent)
+            } catch (e: Exception) { Log.e(TAG, "Erreur WhatsApp", e) }
             return
         } 
         else {
-            reponse = "Je n'ai pas encore l'IA locale, mais j'ai bien entendu : $texte"
+            // Si ce n'est pas une commande, on l'analyse !
+            analyserTexteBasique(texte)
+            return
         }
 
         tvStatus.text = reponse
@@ -127,9 +155,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun speak(texte: String) {
-        if (texte.isNotEmpty()) {
-            tts?.speak(texte, TextToSpeech.QUEUE_FLUSH, null, "DJAMI_TTS")
-        }
+        if (texte.isNotEmpty()) tts?.speak(texte, TextToSpeech.QUEUE_FLUSH, null, "DJAMI_TTS")
     }
 
     private fun checkPermissionAndListen() {
@@ -143,7 +169,7 @@ class MainActivity : AppCompatActivity() {
     private fun startListening() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.FRENCH.toString())
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.FRENCH.toString()) // À modifier plus tard pour le multilingue
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         }
         speechRecognizer?.startListening(intent)
@@ -153,17 +179,13 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_MIC_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             startListening()
-        } else {
-            tvStatus.text = "Permission micro refusée."
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         speechRecognizer?.destroy()
-        if (tts != null) {
-            tts?.stop()
-            tts?.shutdown()
-        }
+        tts?.stop()
+        tts?.shutdown()
     }
 }
