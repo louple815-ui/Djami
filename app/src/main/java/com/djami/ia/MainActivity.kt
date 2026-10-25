@@ -11,7 +11,6 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
-import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -35,7 +34,6 @@ class MainActivity : AppCompatActivity() {
     private var speechRecognizer: SpeechRecognizer? = null
     private var tts: TextToSpeech? = null
     private val REQUEST_CODE = 100
-    private val TAG = "DJAMI_AI"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,29 +59,20 @@ class MainActivity : AppCompatActivity() {
             if (texteAEcrire.isNotEmpty()) analyserTexte(texteAEcrire) else tvStatus.text = "Écris quelque chose !"
         }
 
-        // Action du bouton Jarvis
         btnWakeMode.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                 val serviceIntent = Intent(this, WakeWordService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(serviceIntent)
-                } else {
-                    startService(serviceIntent)
-                }
-                Toast.makeText(this, "Mode Jarvis activé ! Tu peux verrouiller ton téléphone.", Toast.LENGTH_LONG).show()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(serviceIntent) else startService(serviceIntent)
+                Toast.makeText(this, "Mode Jarvis activé !", Toast.LENGTH_LONG).show()
                 tvStatus.text = "Mode écoute en fond activé."
             } else {
-                // Demander les permissions (Micro et Notifications pour Android 13+)
                 val perms = mutableListOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_CONTACTS)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    perms.add(Manifest.permission.POST_NOTIFICATIONS)
-                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) perms.add(Manifest.permission.POST_NOTIFICATIONS)
                 ActivityCompat.requestPermissions(this, perms.toTypedArray(), REQUEST_CODE)
             }
         }
     }
 
-    // (Le reste du code reste identique à la version précédente : handleCommand, ouvrirApplication, analyserTexte, etc.)
     private fun handleCommand(texte: String) {
         val t = texte.lowercase(Locale.getDefault())
         when {
@@ -109,8 +98,7 @@ class MainActivity : AppCompatActivity() {
     private fun ouvrirSms() {
         try {
             val intent = Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) }
-            startActivity(intent)
-            parler("J'ouvre tes messages.")
+            startActivity(intent); parler("J'ouvre tes messages.")
         } catch (e: Exception) { parler("Impossible d'ouvrir les SMS.") }
     }
 
@@ -122,11 +110,8 @@ class MainActivity : AppCompatActivity() {
             if (it.moveToFirst()) {
                 val num = it.getString(it.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER))
                 val nomComplet = it.getString(it.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME))
-                ouvrirClavierTelephone(num)
-                parler("J'ai trouvé $nomComplet.")
-            } else {
-                parler("Contact $nom introuvable.")
-            }
+                ouvrirClavierTelephone(num); parler("J'ai trouvé $nomComplet.")
+            } else { parler("Contact $nom introuvable.") }
         }
     }
 
@@ -165,8 +150,7 @@ class MainActivity : AppCompatActivity() {
             override fun onError(error: Int) { tvStatus.text = "Erreur d'écoute." }
             override fun onResults(results: Bundle?) {
                 results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let {
-                    etInput.setText(it)
-                    handleCommand(it)
+                    etInput.setText(it); handleCommand(it)
                 }
             }
             override fun onPartialResults(partialResults: Bundle?) {

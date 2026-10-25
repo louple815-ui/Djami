@@ -1,81 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center_horizontal">
+    android:background="#FFFFFF">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="DJAMI"
-        android:textColor="#1B5E20"
-        android:textSize="36sp"
-        android:textStyle="bold"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="10dp"/>
-
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Prêt"
-        android:textColor="#FFD700"
-        android:textSize="18sp"
-        android:layout_marginBottom="20dp"/>
-
-    <EditText
-        android:id="@+id/etInput"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:hint="Écris ton texte ici..."
-        android:padding="16dp"
-        android:background="#F0F0F0"
-        android:textColor="#000000"
-        android:gravity="top|start"
-        android:layout_marginBottom="20dp"/>
-
-    <Button
-        android:id="@+id/btnAnalyze"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:backgroundTint="#FFD700"
-        android:text="Corriger le texte"
-        android:textColor="#1B5E20"
-        android:textStyle="bold"
-        android:layout_marginBottom="20dp"/>
-
-    <TextView
-        android:id="@+id/tvResult"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="#333333"
-        android:textSize="18sp"
-        android:gravity="center"
-        android:layout_marginBottom="30dp"/>
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
 
-    <Button
-        android:id="@+id/btnSpeak"
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:background="@drawable/btn_glass"
-        android:text="🎤 Parler à DJAMI"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DJAMI"
+            android:textColor="#1B5E20"
+            android:textSize="42sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"/>
 
-    <!-- Le nouveau bouton pour le mode Jarvis -->
-    <Button
-        android:id="@+id/btnWakeMode"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginTop="20dp"
-        android:backgroundTint="#1B5E20"
-        android:text="🧠 Activer l'écoute en fond (Hey DJAMI)"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Prêt à vous servir"
+            android:textColor="#FFD700"
+            android:textSize="18sp"
+            android:layout_marginBottom="30dp"/>
 
-</LinearLayout>
+        <EditText
+            android:id="@+id/etInput"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:hint="Écrivez ou dictez votre texte (FR, EN, DE)..."
+            android:padding="16dp"
+            android:background="#F5F5F5"
+            android:textColor="#333333"
+            android:gravity="top|start"
+            android:layout_marginBottom="20dp"/>
+
+        <Button
+            android:id="@+id/btnAnalyze"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@drawable/btn_gold"
+            android:text="Analyser et Corriger"
+            android:textColor="#1B5E20"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp"/>
+
+        <TextView
+            android:id="@+id/tvResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:layout_marginBottom="30dp"/>
+
+        <Button
+            android:id="@+id/btnSpeak"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:background="@drawable/btn_glass"
+            android:text="🎤 Parler à DJAMI"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp"/>
+
+        <Button
+            android:id="@+id/btnWakeMode"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:backgroundTint="#1B5E20"
+            android:text="🧠 Mode Jarvis (Écoute en fond)"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</ScrollView>

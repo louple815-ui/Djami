@@ -4,8 +4,6 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
-    
-    <!-- Permissions pour écouter en arrière-plan (Android 14) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -14,6 +12,7 @@
         <package android:name="com.whatsapp" />
         <package android:name="com.facebook.katana" />
         <intent><action android:name="android.intent.action.DIAL" /></intent>
+        <intent><action android:name="android.intent.action.SENDTO" /><data android:scheme="smsto" /></intent>
     </queries>
 
     <application
@@ -22,20 +21,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DJAMI">
         
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+        <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Le service magique qui écoute en fond -->
         <service 
             android:name=".WakeWordService" 
             android:foregroundServiceType="microphone" 
             android:exported="false" />
-            
     </application>
 </manifest>
